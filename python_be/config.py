@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     # CORS Settings
     cors_origins: List[str] = ["*"]
     
+    # Azure OpenAI Settings
+    azure_openai_endpoint: str = "https://aiportalapi.stu-platform.live/jpe"
+    azure_openai_api_key: str = ""
+    azure_deployment_name: str = "GPT-4o-mini"
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

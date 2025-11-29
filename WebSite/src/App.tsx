@@ -27,15 +27,6 @@ interface Conversation {
   timestamp: Date;
 }
 
-interface UploadedFile {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  timestamp: Date;
-  conversationId: string;
-}
-
 export default function App() {
   const [conversations, setConversations] = useState<Conversation[]>([
     {
@@ -56,7 +47,6 @@ export default function App() {
   ]);
 
   const [currentConversationId, setCurrentConversationId] = useState<string>('1');
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [viewMode, setViewMode] = useState<'chat' | 'documents'>('chat');
 
   const currentConversation = conversations.find(
@@ -149,10 +139,6 @@ export default function App() {
     setViewMode('chat');
   };
 
-  const handleDeleteFile = (fileId: string) => {
-    setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId));
-  };
-
   const handleSendMessage = (content: string, file?: File) => {
     if (!currentConversationId) return;
 
@@ -170,19 +156,6 @@ export default function App() {
           }
         : undefined,
     };
-
-    // Track uploaded files
-    if (file) {
-      const uploadedFile: UploadedFile = {
-        id: Date.now().toString(),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        timestamp: new Date(),
-        conversationId: currentConversationId,
-      };
-      setUploadedFiles((prev) => [uploadedFile, ...prev]);
-    }
 
     // Update conversation with user message
     setConversations((prev) =>
@@ -249,15 +222,13 @@ export default function App() {
   if (viewMode === 'documents') {
     return (
       <DocumentManager
-        files={uploadedFiles}
-        onDeleteFile={handleDeleteFile}
         onBack={() => setViewMode('chat')}
       />
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <div className="flex min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       {/* Sidebar Menu */}
       <Sidebar
         conversations={conversations}
@@ -266,7 +237,7 @@ export default function App() {
         onSelectConversation={handleSelectConversation}
         onDeleteConversation={handleDeleteConversation}
         onOpenDocuments={() => setViewMode('documents')}
-        uploadedFilesCount={uploadedFiles.length}
+        uploadedFilesCount={0}
       />
 
       {/* Main Content */}

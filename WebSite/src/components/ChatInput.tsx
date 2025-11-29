@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
+import type React from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Send, Mic, MicOff, Paperclip, X } from 'lucide-react';
+import { Send, Mic, MicOff, Paperclip, X, Loader2, AlertCircle } from 'lucide-react';
 import { Badge } from './ui/badge';
+import { fileService } from '../services/fileService';
 
 interface ChatInputProps {
   onSendMessage: (content: string, file?: File) => void;
@@ -14,10 +16,13 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -27,12 +32,43 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
     };
   }, []);
 
-  const handleSend = () => {
-    if (message.trim() || selectedFile) {
-      onSendMessage(message.trim() || 'Đã gửi file', selectedFile || undefined);
-      setMessage('');
-      setSelectedFile(null);
+  const handleSend = async () => {
+    if (!(message.trim() || selectedFile)) return;
+
+    setErrorMsg(null);
+
+    // If there's a selected file, attempt server upload first (for supported types)
+    if (selectedFile) {
+      const ext = (selectedFile.name.split('.').pop() || '').toLowerCase();
+      const allowed = ['pdf', 'txt', 'doc', 'docx'];
+
+      if (allowed.includes(ext)) {
+        try {
+          setUploading(true);
+          setUploadProgress(0);
+          await fileService.uploadFile(selectedFile, (progress) => {
+            setUploadProgress(progress);
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Upload thất bại';
+          setErrorMsg(msg);
+        } finally {
+          setUploading(false);
+          setUploadProgress(0);
+        }
+      } else if (ext === 'wav') {
+        // Voice recordings are not supported by backend upload; send in chat only
+        setErrorMsg('File ghi âm (.wav) chưa hỗ trợ upload lên server. Vẫn gửi trong chat.');
+      } else {
+        setErrorMsg('Loại file không hỗ trợ upload lên server. Chỉ gửi trong chat.');
+      }
     }
+
+    // Proceed to send the chat message (with file attached for context)
+    onSendMessage(message.trim() || (selectedFile ? `Đã gửi file: ${selectedFile.name}` : ''), selectedFile || undefined);
+    setMessage('');
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -70,8 +106,8 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
         setIsRecording(true);
         setRecordingTime(0);
 
-        recordingIntervalRef.current = setInterval(() => {
-          setRecordingTime((prev) => prev + 1);
+        recordingIntervalRef.current = window.setInterval(() => {
+          setRecordingTime((prev: number) => prev + 1);
         }, 1000);
       } catch (error) {
         console.error('Error accessing microphone:', error);
@@ -83,7 +119,7 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
       }
       setIsRecording(false);
       if (recordingIntervalRef.current) {
-        clearInterval(recordingIntervalRef.current);
+        window.clearInterval(recordingIntervalRef.current);
       }
     }
   };
@@ -128,6 +164,11 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
               {(selectedFile.size / 1024).toFixed(1)} KB
             </p>
           </div>
+          {uploading && (
+            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+              <Loader2 className="size-4 animate-spin" /> {uploadProgress.toFixed(0)}%
+            </div>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -136,6 +177,14 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
           >
             <X className="size-4" />
           </Button>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {errorMsg && (
+        <div className="mb-3 flex items-center gap-2 p-2 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900">
+          <AlertCircle className="size-4 text-red-600" />
+          <span className="text-xs text-red-700 dark:text-red-400">{errorMsg}</span>
         </div>
       )}
 
@@ -159,7 +208,7 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
                 variant={isRecording ? 'destructive' : 'outline'}
                 size="icon"
                 onClick={toggleRecording}
-                className="flex-shrink-0"
+                className="shrink-0"
               >
                 {isRecording ? (
                   <MicOff className="size-5" />
@@ -180,13 +229,13 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
                 variant="outline"
                 size="icon"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-shrink-0"
+                className="shrink-0"
               >
                 <Paperclip className="size-5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Upload file (code, docs, logs)</p>
+              <p>Upload tài liệu: PDF, TXT, DOC, DOCX</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -196,7 +245,7 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
           type="file"
           onChange={handleFileSelect}
           className="hidden"
-          accept=".c,.cpp,.h,.py,.js,.json,.txt,.log,.hex,.bin,.ino,.asm"
+          accept=".pdf,.txt,.doc,.docx"
         />
 
         {/* Text Input */}
@@ -212,8 +261,8 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
         {/* Send Button */}
         <Button
           onClick={handleSend}
-          disabled={!message.trim() && !selectedFile}
-          className="flex-shrink-0"
+          disabled={(uploading) || (!message.trim() && !selectedFile)}
+          className="shrink-0"
         >
           <Send className="size-5" />
         </Button>
@@ -222,18 +271,13 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
       {/* Helper Text */}
       <div className="mt-2 flex items-center gap-2 flex-wrap">
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Tip: Upload code files để review, hoặc hỏi về protocols
+          Tip: Chỉ hỗ trợ upload tài liệu: PDF, TXT, DOC, DOCX
         </p>
         <div className="flex gap-1">
-          <Badge variant="outline" className="text-xs">
-            .c/.cpp
-          </Badge>
-          <Badge variant="outline" className="text-xs">
-            .py
-          </Badge>
-          <Badge variant="outline" className="text-xs">
-            .ino
-          </Badge>
+          <Badge variant="outline" className="text-xs">.pdf</Badge>
+          <Badge variant="outline" className="text-xs">.txt</Badge>
+          <Badge variant="outline" className="text-xs">.doc</Badge>
+          <Badge variant="outline" className="text-xs">.docx</Badge>
         </div>
       </div>
     </Card>
