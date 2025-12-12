@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Input } from './ui/input';
-import { ScrollArea } from './ui/scroll-area';
+import React, { useState, useEffect } from "react";
+import { Card } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { Input } from "../../components/ui/input";
+import { ScrollArea } from "../../components/ui/scroll-area";
 import {
   FileText,
   Trash2,
@@ -15,20 +15,16 @@ import {
   FileCode,
   Loader2,
   RefreshCw,
-  AlertCircle,
-} from 'lucide-react';
-import { Separator } from './ui/separator';
-import { fileService, FileInfo } from '../services/fileService';
-import { Alert, AlertDescription } from './ui/alert';
+  AlertCircle
+} from "lucide-react";
+import { Separator } from "../../components/ui/separator";
+import { fileService, FileInfo } from "../../services/fileService";
+import { Alert, AlertDescription } from "../../components/ui/alert";
+import { useNavigate } from "react-router";
 
-interface DocumentManagerProps {
-  onBack: () => void;
-}
-
-export function DocumentManager({
-  onBack,
-}: DocumentManagerProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+function DocumentManager() {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,8 +43,8 @@ export function DocumentManager({
       const response = await fileService.listFiles();
       setFiles(response.files);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load files');
-      console.error('Error loading files:', err);
+      setError(err instanceof Error ? err.message : "Failed to load files");
+      console.error("Error loading files:", err);
     } finally {
       setLoading(false);
     }
@@ -63,7 +59,7 @@ export function DocumentManager({
       setUploadProgress(0);
       setError(null);
 
-      await fileService.uploadFile(file, (progress) => {
+      await fileService.uploadFile(file, progress => {
         setUploadProgress(progress);
       });
 
@@ -71,12 +67,12 @@ export function DocumentManager({
       await loadFiles();
       setUploadProgress(0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload file');
-      console.error('Error uploading file:', err);
+      setError(err instanceof Error ? err.message : "Failed to upload file");
+      console.error("Error uploading file:", err);
     } finally {
       setUploading(false);
       // Reset file input
-      event.target.value = '';
+      event.target.value = "";
     }
   };
 
@@ -91,8 +87,8 @@ export function DocumentManager({
       // Reload files list
       await loadFiles();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete file');
-      console.error('Error deleting file:', err);
+      setError(err instanceof Error ? err.message : "Failed to delete file");
+      console.error("Error deleting file:", err);
     }
   };
 
@@ -100,18 +96,18 @@ export function DocumentManager({
     try {
       await fileService.downloadFile(filename);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to download file');
-      console.error('Error downloading file:', err);
+      setError(err instanceof Error ? err.message : "Failed to download file");
+      console.error("Error downloading file:", err);
     }
   };
 
   // Group files by date - using file modification from backend (using current date for now)
   const groupedFiles = files.reduce((acc, file) => {
     // For now, group all in today's date since backend doesn't provide timestamp
-    const dateKey = new Date().toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    const dateKey = new Date().toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
     });
 
     if (!acc[dateKey]) {
@@ -127,27 +123,25 @@ export function DocumentManager({
   });
 
   // Filter files by search query
-  const filteredDates = sortedDates.filter((date) => {
+  const filteredDates = sortedDates.filter(date => {
     const filesInDate = groupedFiles[date];
-    return filesInDate.some((file) =>
+    return filesInDate.some(file =>
       file.filename.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
 
   const getFileIcon = (extension: string) => {
     const ext = extension.toLowerCase();
-    if (ext === '.pdf') return '📄';
-    if (ext === '.txt') return '📝';
-    if (ext === '.docx' || ext === '.doc') return '📘';
-    return '📎';
+    if (ext === ".pdf") return "📄";
+    if (ext === ".txt") return "📝";
+    if (ext === ".docx" || ext === ".doc") return "📘";
+    return "📎";
   };
 
   const getTotalSize = () => {
     const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
     const totalMB = totalBytes / (1024 * 1024);
-    return totalMB < 1
-      ? `${(totalBytes / 1024).toFixed(1)} KB`
-      : `${totalMB.toFixed(2)} MB`;
+    return totalMB < 1 ? `${(totalBytes / 1024).toFixed(1)} KB` : `${totalMB.toFixed(2)} MB`;
   };
 
   const formatFileSize = (bytes: number) => {
@@ -162,13 +156,11 @@ export function DocumentManager({
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-4 mb-4">
-            <Button variant="outline" size="icon" onClick={onBack}>
+            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="size-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-slate-900 dark:text-slate-100">
-                Quản lý Tài liệu
-              </h1>
+              <h1 className="text-slate-900 dark:text-slate-100">Quản lý Tài liệu</h1>
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 Tất cả file đã upload trên server
               </p>
@@ -181,11 +173,11 @@ export function DocumentManager({
                 disabled={loading}
                 title="Tải lại danh sách"
               >
-                <RefreshCw className={`size-5 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`size-5 ${loading ? "animate-spin" : ""}`} />
               </Button>
               <Button
                 variant="default"
-                onClick={() => document.getElementById('file-upload')?.click()}
+                onClick={() => document.getElementById("file-upload")?.click()}
                 disabled={uploading}
               >
                 {uploading ? (
@@ -226,9 +218,7 @@ export function DocumentManager({
                   <FileText className="size-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Tổng số file
-                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Tổng số file</p>
                   <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                     {files.length}
                   </p>
@@ -242,9 +232,7 @@ export function DocumentManager({
                   <UploadIcon className="size-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Dung lượng
-                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Dung lượng</p>
                   <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                     {getTotalSize()}
                   </p>
@@ -258,11 +246,9 @@ export function DocumentManager({
                   <FileCode className="size-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Loại file
-                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Loại file</p>
                   <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                    {new Set(files.map((f) => f.extension)).size}
+                    {new Set(files.map(f => f.extension)).size}
                   </p>
                 </div>
               </div>
@@ -276,7 +262,7 @@ export function DocumentManager({
               <Input
                 placeholder="Tìm kiếm file theo tên..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
             </div>
@@ -289,9 +275,7 @@ export function DocumentManager({
             {loading ? (
               <div className="p-12 text-center">
                 <Loader2 className="size-12 text-slate-400 animate-spin mx-auto mb-4" />
-                <p className="text-slate-600 dark:text-slate-400">
-                  Đang tải danh sách file...
-                </p>
+                <p className="text-slate-600 dark:text-slate-400">Đang tải danh sách file...</p>
               </div>
             ) : files.length === 0 ? (
               <div className="p-12 text-center">
@@ -304,23 +288,19 @@ export function DocumentManager({
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                   Tải lên file PDF, TXT, hoặc DOCX để bắt đầu
                 </p>
-                <Button
-                  onClick={() => document.getElementById('file-upload')?.click()}
-                >
+                <Button onClick={() => document.getElementById("file-upload")?.click()}>
                   <UploadIcon className="size-4 mr-2" />
                   Tải lên file đầu tiên
                 </Button>
               </div>
             ) : filteredDates.length === 0 ? (
               <div className="p-12 text-center">
-                <p className="text-slate-600 dark:text-slate-400">
-                  Không tìm thấy file nào
-                </p>
+                <p className="text-slate-600 dark:text-slate-400">Không tìm thấy file nào</p>
               </div>
             ) : (
               <div className="p-4 space-y-6">
-                {filteredDates.map((date) => {
-                  const filesInDate = groupedFiles[date].filter((file) =>
+                {filteredDates.map(date => {
+                  const filesInDate = groupedFiles[date].filter(file =>
                     file.filename.toLowerCase().includes(searchQuery.toLowerCase())
                   );
 
@@ -338,15 +318,13 @@ export function DocumentManager({
 
                       {/* Files */}
                       <div className="space-y-2 ml-6">
-                        {filesInDate.map((file) => (
+                        {filesInDate.map(file => (
                           <Card
                             key={file.filename}
                             className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                           >
                             <div className="flex items-start gap-3">
-                              <div className="text-2xl mt-1">
-                                {getFileIcon(file.extension)}
-                              </div>
+                              <div className="text-2xl mt-1">{getFileIcon(file.extension)}</div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex-1 min-w-0">
@@ -354,11 +332,8 @@ export function DocumentManager({
                                       {file.filename}
                                     </p>
                                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs"
-                                      >
-                                        {file.extension.toUpperCase().replace('.', '')}
+                                      <Badge variant="outline" className="text-xs">
+                                        {file.extension.toUpperCase().replace(".", "")}
                                       </Badge>
                                       <span className="text-xs text-slate-500">
                                         {formatFileSize(file.size)}
@@ -402,3 +377,5 @@ export function DocumentManager({
     </div>
   );
 }
+
+export default DocumentManager;
