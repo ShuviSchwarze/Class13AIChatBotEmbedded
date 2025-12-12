@@ -77,12 +77,12 @@ class ChatService {
       },
       body: JSON.stringify(request),
     });
-    
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: response.statusText }));
       throw new Error(error.detail || `Chat request failed: ${response.statusText}`);
     }
-    
+
     return response.json();
   }
 
@@ -136,12 +136,12 @@ class ChatService {
 
       while (true) {
         const { done, value } = await reader.read();
-        
+
         if (done) break;
-        
+
         const chunk = decoder.decode(value, { stream: true });
         fullResponse += chunk;
-        
+
         if (options?.onToken) {
           options.onToken(chunk);
         }

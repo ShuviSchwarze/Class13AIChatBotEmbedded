@@ -76,7 +76,6 @@ const ChatPage: React.FC = () => {
 
     // Open PDF viewer in a new tab
     const url = `${baseUrl}?${params.toString()}`;
-    console.log("url", url);
     window.open(url, "_blank");
   };
 
