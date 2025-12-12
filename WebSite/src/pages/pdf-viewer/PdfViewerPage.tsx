@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { PdfViewer } from './components/PdfViewer';
+import React, { useEffect, useState } from "react";
+import { PdfViewer } from "../../components/PdfViewer";
 
 export default function PdfViewerPage() {
   const [config, setConfig] = useState<{
@@ -11,15 +11,15 @@ export default function PdfViewerPage() {
   useEffect(() => {
     // Parse URL parameters
     const params = new URLSearchParams(window.location.search);
-    const url = params.get('url');
-    const page = parseInt(params.get('page') || '1');
-    const search = params.get('search') || undefined;
+    const url = params.get("url");
+    const page = parseInt(params.get("page") || "1");
+    const search = params.get("search") || undefined;
 
     if (url) {
       setConfig({
         pdfUrl: decodeURIComponent(url),
         page,
-        searchText: search,
+        searchText: search
       });
     }
   }, []);

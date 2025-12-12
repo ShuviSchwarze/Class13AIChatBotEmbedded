@@ -1,14 +1,11 @@
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import React from "react";
+import { RouterProvider } from "react-router/dom";
+import router from "./router";
 
-  import { createRoot } from "react-dom/client";
-  import App from "./App.tsx";
-  import PdfViewerPage from "./PdfViewerPage.tsx";
-  import "./index.css";
-
-  // Check if this is the PDF viewer page
-  const isPdfViewerPage = window.location.pathname === '/pdf-viewer' || 
-                          window.location.search.includes('url=');
-
-  createRoot(document.getElementById("root")!).render(
-    isPdfViewerPage ? <PdfViewerPage /> : <App />
-  );
-  
+createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <RouterProvider router={router} />
+  </React.StrictMode>
+);

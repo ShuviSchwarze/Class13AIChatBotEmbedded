@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { ScrollArea } from './ui/scroll-area';
-import { Card } from './ui/card';
-import { Badge } from './ui/badge';
-import { Input } from './ui/input';
+import React, { useState } from "react";
+import { Button } from "./ui/button";
+import { ScrollArea } from "./ui/scroll-area";
+import { Badge } from "./ui/badge";
+import { Input } from "./ui/input";
 import {
   X,
   Plus,
@@ -14,9 +13,9 @@ import {
   FolderOpen,
   ChevronLeft,
   ChevronRight,
-  Code2,
-} from 'lucide-react';
-import { Separator } from './ui/separator';
+  Code2
+} from "lucide-react";
+import { cn } from "./ui/utils";
 
 interface Conversation {
   id: string;
@@ -31,6 +30,7 @@ interface SidebarProps {
   onNewChat: () => void;
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
+  onEditConversation: (id: string, title: string) => void;
   onOpenDocuments: () => void;
   uploadedFilesCount: number;
 }
@@ -41,14 +41,15 @@ export function Sidebar({
   onNewChat,
   onSelectConversation,
   onDeleteConversation,
+  onEditConversation,
   onOpenDocuments,
-  uploadedFilesCount,
+  uploadedFilesCount
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const filteredConversations = conversations.filter((conv) =>
+  const filteredConversations = conversations.filter(conv =>
     conv.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -60,19 +61,17 @@ export function Sidebar({
   lastWeek.setDate(lastWeek.getDate() - 7);
 
   const groupedConversations = {
-    today: filteredConversations.filter(
-      (c) => c.timestamp.toDateString() === today.toDateString()
-    ),
+    today: filteredConversations.filter(c => c.timestamp.toDateString() === today.toDateString()),
     yesterday: filteredConversations.filter(
-      (c) => c.timestamp.toDateString() === yesterday.toDateString()
+      c => c.timestamp.toDateString() === yesterday.toDateString()
     ),
     lastWeek: filteredConversations.filter(
-      (c) =>
+      c =>
         c.timestamp > lastWeek &&
         c.timestamp.toDateString() !== today.toDateString() &&
         c.timestamp.toDateString() !== yesterday.toDateString()
     ),
-    older: filteredConversations.filter((c) => c.timestamp <= lastWeek),
+    older: filteredConversations.filter(c => c.timestamp <= lastWeek)
   };
 
   if (collapsed) {
@@ -152,7 +151,7 @@ export function Sidebar({
           <Input
             placeholder="Search conversations..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-9 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
           />
         </div>
@@ -164,17 +163,16 @@ export function Sidebar({
           {/* Today */}
           {groupedConversations.today.length > 0 && (
             <div>
-              <h3 className="px-3 py-1 text-xs text-slate-400 uppercase tracking-wider">
-                Today
-              </h3>
+              <h3 className="px-3 py-1 text-xs text-slate-400 uppercase tracking-wider">Today</h3>
               <div className="space-y-1">
-                {groupedConversations.today.map((conversation) => (
+                {groupedConversations.today.map(conversation => (
                   <ConversationItem
                     key={conversation.id}
                     conversation={conversation}
                     isActive={conversation.id === currentConversationId}
                     onSelect={onSelectConversation}
                     onDelete={onDeleteConversation}
+                    onEditTitle={onEditConversation}
                     isEditing={editingId === conversation.id}
                     onEdit={setEditingId}
                   />
@@ -190,13 +188,14 @@ export function Sidebar({
                 Yesterday
               </h3>
               <div className="space-y-1">
-                {groupedConversations.yesterday.map((conversation) => (
+                {groupedConversations.yesterday.map(conversation => (
                   <ConversationItem
                     key={conversation.id}
                     conversation={conversation}
                     isActive={conversation.id === currentConversationId}
                     onSelect={onSelectConversation}
                     onDelete={onDeleteConversation}
+                    onEditTitle={onEditConversation}
                     isEditing={editingId === conversation.id}
                     onEdit={setEditingId}
                   />
@@ -212,13 +211,14 @@ export function Sidebar({
                 Previous 7 Days
               </h3>
               <div className="space-y-1">
-                {groupedConversations.lastWeek.map((conversation) => (
+                {groupedConversations.lastWeek.map(conversation => (
                   <ConversationItem
                     key={conversation.id}
                     conversation={conversation}
                     isActive={conversation.id === currentConversationId}
                     onSelect={onSelectConversation}
                     onDelete={onDeleteConversation}
+                    onEditTitle={onEditConversation}
                     isEditing={editingId === conversation.id}
                     onEdit={setEditingId}
                   />
@@ -230,17 +230,16 @@ export function Sidebar({
           {/* Older */}
           {groupedConversations.older.length > 0 && (
             <div>
-              <h3 className="px-3 py-1 text-xs text-slate-400 uppercase tracking-wider">
-                Older
-              </h3>
+              <h3 className="px-3 py-1 text-xs text-slate-400 uppercase tracking-wider">Older</h3>
               <div className="space-y-1">
-                {groupedConversations.older.map((conversation) => (
+                {groupedConversations.older.map(conversation => (
                   <ConversationItem
                     key={conversation.id}
                     conversation={conversation}
                     isActive={conversation.id === currentConversationId}
                     onSelect={onSelectConversation}
                     onDelete={onDeleteConversation}
+                    onEditTitle={onEditConversation}
                     isEditing={editingId === conversation.id}
                     onEdit={setEditingId}
                   />
@@ -268,10 +267,7 @@ export function Sidebar({
           <FolderOpen className="size-4" />
           Documents
           {uploadedFilesCount > 0 && (
-            <Badge
-              variant="secondary"
-              className="ml-auto bg-slate-700 text-slate-200"
-            >
+            <Badge variant="secondary" className="ml-auto bg-slate-700 text-slate-200">
               {uploadedFilesCount}
             </Badge>
           )}
@@ -286,6 +282,7 @@ interface ConversationItemProps {
   isActive: boolean;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
+  onEditTitle: (id: string, title: string) => void;
   isEditing: boolean;
   onEdit: (id: string | null) => void;
 }
@@ -295,48 +292,93 @@ function ConversationItem({
   isActive,
   onSelect,
   onDelete,
+  onEditTitle,
   isEditing,
-  onEdit,
+  onEdit
 }: ConversationItemProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [editValue, setEditValue] = useState(conversation.title);
+
+  const handleSaveEdit = () => {
+    if (editValue.trim() && editValue !== conversation.title) {
+      onEditTitle(conversation.id, editValue.trim());
+    }
+    onEdit(null);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSaveEdit();
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setEditValue(conversation.title);
+      onEdit(null);
+    }
+  };
+
+  const handleStartEdit = () => {
+    setEditValue(conversation.title);
+    onEdit(conversation.id);
+  };
 
   return (
     <div
-      className={`group relative rounded-lg transition-colors cursor-pointer ${
-        isActive
-          ? 'bg-slate-800 text-white'
-          : 'text-slate-300 hover:bg-slate-800/50'
-      }`}
+      className={cn(
+        "group rounded-lg transition-colors overflow-hidden w-60",
+        isActive ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-800/50",
+        isEditing ? "cursor-default" : "cursor-pointer"
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => onSelect(conversation.id)}
+      onClick={() => !isEditing && onSelect(conversation.id)}
     >
-      <div className="flex items-center gap-2 px-3 py-2">
-        <MessageSquare className="size-4 flex-shrink-0" />
-        <span className="flex-1 text-sm truncate">{conversation.title}</span>
-        {(isHovered || isActive) && (
-          <div
-            className="flex items-center gap-1"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6 opacity-0 group-hover:opacity-100 hover:bg-slate-700"
-              onClick={() => onEdit(conversation.id)}
-            >
-              <Edit2 className="size-3 text-slate-400" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6 opacity-0 group-hover:opacity-100 hover:bg-slate-700"
-              onClick={() => onDelete(conversation.id)}
-            >
-              <Trash2 className="size-3 text-red-400" />
-            </Button>
-          </div>
+      <div className="flex items-center px-3 py-2 max-w-full">
+        <div className="w-5 shrink-0 flex justify-start">
+          <MessageSquare className="size-4" />
+        </div>
+
+        {isEditing ? (
+          <input
+            className="flex-1 text-sm ml-2 mr-2 min-w-0 bg-transparent border border-slate-600 rounded px-1 h-5 leading-none focus:outline-none focus:border-blue-500 text-inherit"
+            value={editValue}
+            onChange={e => setEditValue(e.target.value)}
+            onBlur={handleSaveEdit}
+            onKeyDown={handleKeyPress}
+            autoFocus
+            onClick={e => e.stopPropagation()}
+          />
+        ) : (
+          <span className="flex-1 text-sm truncate ml-2 mr-2 min-w-0 h-5 leading-none flex items-center">
+            {conversation.title}
+          </span>
         )}
+
+        <div
+          className={cn(
+            "w-12 shrink-0 flex items-center gap-0.5 justify-end transition-opacity duration-200",
+            isHovered || isActive ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+          onClick={e => e.stopPropagation()}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-5 hover:bg-slate-700"
+            onClick={handleStartEdit}
+          >
+            <Edit2 className="size-3 text-slate-400" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-5 hover:bg-slate-700"
+            onClick={() => onDelete(conversation.id)}
+          >
+            <Trash2 className="size-3 text-red-400" />
+          </Button>
+        </div>
       </div>
     </div>
   );

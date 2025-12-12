@@ -1,17 +1,10 @@
-import { Message, DocumentSource } from "../App";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Bot,
-  User,
-  FileText,
-  ExternalLink,
-  Volume,
-  Volume2,
-} from "lucide-react";
+import { Bot, User, FileText, ExternalLink, Volume, Volume2 } from "lucide-react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { Message } from "../types";
 
 interface ChatMessageProps {
   message: Message;
@@ -38,9 +31,7 @@ export function ChatMessage({ message, onOpenPdf }: ChatMessageProps) {
 
       {/* Message Content */}
       <div
-        className={`flex-1 max-w-[80%] ${
-          isUser ? "items-end" : "items-start"
-        } flex flex-col gap-2`}
+        className={`flex-1 max-w-[80%] ${isUser ? "items-end" : "items-start"} flex flex-col gap-2`}
       >
         <Card
           className={`p-3 ${
@@ -54,14 +45,9 @@ export function ChatMessage({ message, onOpenPdf }: ChatMessageProps) {
               <FileText className="size-4" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm truncate">{message.file.name}</p>
-                <p className="text-xs opacity-70">
-                  {(message.file.size / 1024).toFixed(1)} KB
-                </p>
+                <p className="text-xs opacity-70">{(message.file.size / 1024).toFixed(1)} KB</p>
               </div>
-              <Badge
-                variant="secondary"
-                className={isUser ? "bg-blue-700 text-white" : ""}
-              >
+              <Badge variant="secondary" className={isUser ? "bg-blue-700 text-white" : ""}>
                 {message.file.type.split("/")[1]?.toUpperCase() || "FILE"}
               </Badge>
             </div>
@@ -71,14 +57,10 @@ export function ChatMessage({ message, onOpenPdf }: ChatMessageProps) {
             <LoadingSpinner size="md" />
           ) : (
             <div className="flex items-start gap-2">
-              <p className="whitespace-pre-wrap break-words flex-1">
-                {message.content}
-              </p>
+              <p className="whitespace-pre-wrap break-words flex-1">{message.content}</p>
 
               {/* Inline speaker icon: plays audio URL or uses TTS fallback for bot */}
-              {(message.audio || message.type === "bot") && (
-                <SpeakerControl message={message} />
-              )}
+              {(message.audio || message.type === "bot") && <SpeakerControl message={message} />}
             </div>
           )}
         </Card>
@@ -113,20 +95,25 @@ export function ChatMessage({ message, onOpenPdf }: ChatMessageProps) {
                             {source.source.split(".").pop()?.toUpperCase() || "FILE"}
                           </Badge>
                         )}
+                        {/* Show file type badge for non-PDF files */}
+                        {!source.source.endsWith(".pdf") && (
+                          <Badge variant="secondary" className="text-xs">
+                            {source.source.split(".").pop()?.toUpperCase() || "FILE"}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
                         {source.text.substring(0, 120)}...
                       </p>
                     </div>
                     {/* PDF viewer button for PDFs */}
+                    {/* PDF viewer button for PDFs */}
                     {onOpenPdf && source.source.endsWith(".pdf") && (
                       <Button
                         variant="ghost"
                         size="icon"
                         className="size-6 flex-shrink-0"
-                        onClick={() =>
-                          onOpenPdf(source.source, source.page, source.text)
-                        }
+                        onClick={() => onOpenPdf(source.source, source.page, source.text)}
                       >
                         <ExternalLink className="size-3" />
                       </Button>
@@ -138,9 +125,14 @@ export function ChatMessage({ message, onOpenPdf }: ChatMessageProps) {
                         size="icon"
                         className="size-6 flex-shrink-0"
                         onClick={() => {
-                          const filename = source.source.split('/').pop() || source.source.split('\\').pop() || source.source;
-                          const viewUrl = `http://localhost:8000/api/v1/files/download/${encodeURIComponent(filename)}`;
-                          window.open(viewUrl, '_blank');
+                          const filename =
+                            source.source.split("/").pop() ||
+                            source.source.split("\\").pop() ||
+                            source.source;
+                          const viewUrl = `http://localhost:8000/api/v1/files/download/${encodeURIComponent(
+                            filename
+                          )}`;
+                          window.open(viewUrl, "_blank");
                         }}
                         title="View text file"
                       >
@@ -154,14 +146,30 @@ export function ChatMessage({ message, onOpenPdf }: ChatMessageProps) {
                         size="icon"
                         className="size-6 flex-shrink-0"
                         onClick={() => {
-                          const filename = source.source.split('/').pop() || source.source.split('\\').pop() || source.source;
-                          const downloadUrl = `http://localhost:8000/api/v1/files/download/${encodeURIComponent(filename)}`;
-                          window.open(downloadUrl, '_blank');
+                          const filename =
+                            source.source.split("/").pop() ||
+                            source.source.split("\\").pop() ||
+                            source.source;
+                          const downloadUrl = `http://localhost:8000/api/v1/files/download/${encodeURIComponent(
+                            filename
+                          )}`;
+                          window.open(downloadUrl, "_blank");
                         }}
                         title="Download file"
                       >
-                        <svg className="size-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        <svg
+                          className="size-3"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
                         </svg>
                       </Button>
                     )}
@@ -176,7 +184,7 @@ export function ChatMessage({ message, onOpenPdf }: ChatMessageProps) {
         <span className="text-xs text-slate-500 dark:text-slate-400 px-1">
           {message.timestamp.toLocaleTimeString("vi-VN", {
             hour: "2-digit",
-            minute: "2-digit",
+            minute: "2-digit"
           })}
         </span>
       </div>

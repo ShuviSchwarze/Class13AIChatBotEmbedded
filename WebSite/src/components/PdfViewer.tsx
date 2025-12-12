@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useEffect, useRef, useState } from "react";
+import * as pdfjsLib from "pdfjs-dist";
+import { Card } from "./ui/card";
+import { Button } from "./ui/button";
+import { X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from "lucide-react";
 
 // Configure PDF.js worker - use the worker from node_modules
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
+  "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url
 ).toString();
 
@@ -33,23 +33,25 @@ export function PdfViewer({ pdfUrl, pageNumber = 1, searchText, onClose }: PdfVi
       try {
         setLoading(true);
         setError(null);
-        console.log('Loading PDF from URL:', pdfUrl);
-        
+        console.log("Loading PDF from URL:", pdfUrl);
+
         const loadingTask = pdfjsLib.getDocument({
           url: pdfUrl,
           cMapUrl: `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/cmaps/`,
           cMapPacked: true,
-          withCredentials: false,
+          withCredentials: false
         });
-        
+
         const pdfDoc = await loadingTask.promise;
-        console.log('PDF loaded successfully, pages:', pdfDoc.numPages);
+        console.log("PDF loaded successfully, pages:", pdfDoc.numPages);
         setPdf(pdfDoc);
         setTotalPages(pdfDoc.numPages);
         setLoading(false);
       } catch (err) {
-        console.error('Error loading PDF:', err);
-        setError(`Failed to load PDF document: ${err instanceof Error ? err.message : String(err)}`);
+        console.error("Error loading PDF:", err);
+        setError(
+          `Failed to load PDF document: ${err instanceof Error ? err.message : String(err)}`
+        );
         setLoading(false);
       }
     };
@@ -67,7 +69,7 @@ export function PdfViewer({ pdfUrl, pageNumber = 1, searchText, onClose }: PdfVi
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const context = canvas.getContext('2d');
+        const context = canvas.getContext("2d");
         if (!context) return;
 
         const viewport = page.getViewport({ scale });
@@ -77,7 +79,7 @@ export function PdfViewer({ pdfUrl, pageNumber = 1, searchText, onClose }: PdfVi
 
         const renderContext = {
           canvasContext: context,
-          viewport: viewport,
+          viewport: viewport
         };
 
         await page.render(renderContext).promise;
@@ -87,7 +89,7 @@ export function PdfViewer({ pdfUrl, pageNumber = 1, searchText, onClose }: PdfVi
           await highlightText(page, context, viewport, searchText);
         }
       } catch (err) {
-        console.error('Error rendering page:', err);
+        console.error("Error rendering page:", err);
       }
     };
 
@@ -95,19 +97,21 @@ export function PdfViewer({ pdfUrl, pageNumber = 1, searchText, onClose }: PdfVi
   }, [pdf, currentPage, scale, searchText]);
 
   // Highlight text on the page
-  const highlightText = async (page: any, context: CanvasRenderingContext2D, viewport: any, text: string) => {
+  const highlightText = async (
+    page: any,
+    context: CanvasRenderingContext2D,
+    viewport: any,
+    text: string
+  ) => {
     try {
       const textContent = await page.getTextContent();
-      const searchRegex = new RegExp(text.trim(), 'gi');
+      const searchRegex = new RegExp(text.trim(), "gi");
 
-      context.fillStyle = 'rgba(255, 255, 0, 0.4)';
+      context.fillStyle = "rgba(255, 255, 0, 0.4)";
 
       for (const item of textContent.items) {
-        if ('str' in item && searchRegex.test(item.str)) {
-          const transform = pdfjsLib.Util.transform(
-            viewport.transform,
-            item.transform
-          );
+        if ("str" in item && searchRegex.test(item.str)) {
+          const transform = pdfjsLib.Util.transform(viewport.transform, item.transform);
 
           const x = transform[4];
           const y = transform[5];
@@ -118,14 +122,14 @@ export function PdfViewer({ pdfUrl, pageNumber = 1, searchText, onClose }: PdfVi
         }
       }
     } catch (err) {
-      console.error('Error highlighting text:', err);
+      console.error("Error highlighting text:", err);
     }
   };
 
-  const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.25, 3));
-  const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.25, 0.5));
-  const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-  const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.25, 3));
+  const handleZoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.5));
+  const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
@@ -158,10 +162,10 @@ export function PdfViewer({ pdfUrl, pageNumber = 1, searchText, onClose }: PdfVi
           </div>
 
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
-              onClick={() => window.open(pdfUrl, '_blank')}
+              onClick={() => window.open(pdfUrl, "_blank")}
               title="Open in new tab"
             >
               Open in New Tab
@@ -170,9 +174,7 @@ export function PdfViewer({ pdfUrl, pageNumber = 1, searchText, onClose }: PdfVi
             <Button variant="outline" size="icon" onClick={handleZoomOut}>
               <ZoomOut className="size-4" />
             </Button>
-            <span className="text-sm w-16 text-center">
-              {Math.round(scale * 100)}%
-            </span>
+            <span className="text-sm w-16 text-center">{Math.round(scale * 100)}%</span>
             <Button variant="outline" size="icon" onClick={handleZoomIn}>
               <ZoomIn className="size-4" />
             </Button>
@@ -202,11 +204,7 @@ export function PdfViewer({ pdfUrl, pageNumber = 1, searchText, onClose }: PdfVi
             </div>
           )}
           {!loading && !error && (
-            <canvas
-              ref={canvasRef}
-              className="shadow-lg bg-white"
-              style={{ maxWidth: '100%' }}
-            />
+            <canvas ref={canvasRef} className="shadow-lg bg-white" style={{ maxWidth: "100%" }} />
           )}
         </div>
 
